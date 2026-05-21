@@ -6,6 +6,7 @@ public class MicInput : MonoBehaviour
     string micName;
 
     public Transform CloudHole;
+    public RectTransform micBar;
     public float loudness = 0f;
     public float smoothedLoudness = 0f;
     public float MicThreshold = 0.0001f;
@@ -14,6 +15,7 @@ public class MicInput : MonoBehaviour
     public float maxsize = 10f;
     public float growSpeed = 3f; 
     public float shrinkSpeed = 0.03f;
+    public float noiseFloor = 0.02f;
 
     float visibility = 0f;
 
@@ -54,16 +56,27 @@ public class MicInput : MonoBehaviour
 
         loudness = sum / samples.Length;
 
-        // smooth signal
+        // increase amplitude for sensitivity increase
+        loudness *= 500f;
+        loudness = Mathf.Max(0, loudness - noiseFloor);
+
+        // smooth signal heavily
         smoothedLoudness = Mathf.Lerp(
             smoothedLoudness,
             loudness,
-            5f * Time.deltaTime
+            0.5f * Time.deltaTime
         );
 
-        // amplify microphone signal
+        // visualize mic input
+        float visual = Mathf.Clamp(smoothedLoudness * 2000f, 0f, 300f);
+        micBar.sizeDelta = new Vector2(
+            visual,
+            micBar.sizeDelta.y
+        );
+
+        // amplify microphone signal again
         float amplifiedLoudness =
-            Mathf.Clamp01(smoothedLoudness * 100f);
+            Mathf.Clamp01(smoothedLoudness);
 
         // if loud enough -> grow visibility
         if (amplifiedLoudness > MicThreshold)
@@ -99,6 +112,10 @@ public class MicInput : MonoBehaviour
             3f * Time.deltaTime
         );
 
-        Debug.Log(visibility);
-            }
+        Debug.Log(smoothedLoudness);
+
+
+    }
+
+        
 }
