@@ -6,7 +6,7 @@ public class MicInput : MonoBehaviour
     string micName;
 
     public Transform CloudHole;
-    public RectTransform micBar;
+    public RectTransform bar;
     public float loudness = 0f;
     public float smoothedLoudness = 0f;
     public float MicThreshold = 0.0001f;
@@ -15,7 +15,7 @@ public class MicInput : MonoBehaviour
     public float maxsize = 10f;
     public float growSpeed = 3f; 
     public float shrinkSpeed = 0.03f;
-    public float noiseFloor = 0.02f;
+    public float noiseFloor = 0.0f;
 
     float visibility = 0f;
 
@@ -54,34 +54,29 @@ public class MicInput : MonoBehaviour
             sum += Mathf.Abs(samples[i]);
         }
 
-        loudness = sum / samples.Length;
+        loudness = sum / samples.Length *50000f;
 
         // increase amplitude for sensitivity increase
-        loudness *= 500f;
         loudness = Mathf.Max(0, loudness - noiseFloor);
 
         // smooth signal heavily
         smoothedLoudness = Mathf.Lerp(
             smoothedLoudness,
             loudness,
-            0.5f * Time.deltaTime
+            0.25f
         );
 
         // visualize mic input
-        float visual = Mathf.Clamp(smoothedLoudness * 2000f, 0f, 300f);
-        micBar.sizeDelta = new Vector2(
-            visual,
-            micBar.sizeDelta.y
-        );
+        float calmness = Mathf.Clamp01(1 - smoothedLoudness * 50f);
+        Debug.Log($"raw {loudness} smooth {smoothedLoudness} calm {calmness}");
 
-        // amplify microphone signal again
-        float amplifiedLoudness =
-            Mathf.Clamp01(smoothedLoudness);
+        if (bar != null)
+            bar.sizeDelta = new Vector2(calmness * 300f, 20f);
 
         // if loud enough -> grow visibility
-        if (amplifiedLoudness > MicThreshold)
+        if (calmness > MicThreshold)
         {
-            visibility += growSpeed * amplifiedLoudness * Time.deltaTime;
+            visibility += growSpeed * calmness * Time.deltaTime;
         }
         else
         {
@@ -89,14 +84,12 @@ public class MicInput : MonoBehaviour
             visibility -= shrinkSpeed * Time.deltaTime;
         }
 
-        // clamp visibility
-        visibility = Mathf.Clamp01(visibility);
 
         // convert visibility to cloud size
         float newSize = Mathf.Lerp(
             minsize,
             maxsize,
-            visibility
+            calmness
         );
 
         // subtle pulse
@@ -112,7 +105,6 @@ public class MicInput : MonoBehaviour
             3f * Time.deltaTime
         );
 
-        Debug.Log(smoothedLoudness);
 
 
     }
