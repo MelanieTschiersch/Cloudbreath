@@ -68,15 +68,15 @@ public class MicInput : MonoBehaviour
 
         // visualize mic input
         float calmness = Mathf.Clamp01(1 - smoothedLoudness * 50f);
-        Debug.Log($"raw {loudness} smooth {smoothedLoudness} calm {calmness}");
+        Debug.Log($"smooth {smoothedLoudness} visibility {visibility} calm {calmness}");
 
         if (bar != null)
             bar.sizeDelta = new Vector2(calmness * 300f, 20f);
 
         // if loud enough -> grow visibility
-        if (calmness > MicThreshold)
+        if (smoothedLoudness > MicThreshold)
         {
-            visibility += growSpeed * calmness * Time.deltaTime;
+            visibility += growSpeed  * Time.deltaTime;
         }
         else
         {
@@ -89,7 +89,7 @@ public class MicInput : MonoBehaviour
         float newSize = Mathf.Lerp(
             minsize,
             maxsize,
-            calmness
+            visibility
         );
 
         // subtle pulse
